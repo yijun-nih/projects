@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Downloaded GEO dataset cache
+data/geo_cache/
+
 # C extensions
 *.so
 

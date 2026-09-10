@@ -133,8 +133,24 @@ the result meaningfully. Rough shape either way:
 
 ## 8. Getting Started
 
-_To be written once the pipeline has working code — see Section 8 (Repo structure) for the intended layout
-in the meantime._
+The root [`pyproject.toml`](pyproject.toml) defines the required Python version and project dependencies.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if it is not already available, then
+run the following commands from the repository root:
+
+```bash
+# Install the exact Python version required by pyproject.toml.
+uv python install 3.12.13
+
+# Resolve the dependencies and install them into a new .venv directory.
+# uv reads both the Python requirement and dependencies from pyproject.toml.
+uv sync --python 3.12.13
+
+# Activate the uv-managed environment for the current shell session.
+source .venv/bin/activate
+```
+
+After activation, `python --version` should report `Python 3.12.13`. Run `deactivate` when you are
+finished. 
 
 ## 9. Repo structure (proposed)
 

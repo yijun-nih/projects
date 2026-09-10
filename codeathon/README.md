@@ -133,11 +133,14 @@ the result meaningfully. Rough shape either way:
 
 ## 8. Getting Started
 
-The root [`pyproject.toml`](pyproject.toml) defines the required Python version and project dependencies.
+The project [`pyproject.toml`](pyproject.toml) defines the required Python version and dependencies.
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if it is not already available, then
 run the following commands from the repository root:
 
 ```bash
+# Enter the project directory.
+cd codeathon
+
 # Install the exact Python version required by pyproject.toml.
 uv python install 3.12.13
 

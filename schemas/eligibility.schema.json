@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hypothesis2omics.local/schemas/eligibility.schema.json",
+  "title": "Hypothesis2Omics dataset eligibility judgment",
+  "x-version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gse_id",
+    "eligible",
+    "cd8_signal_type",
+    "confidence",
+    "needs_splitting",
+    "split_rationale",
+    "exclusion_reason",
+    "rationale"
+  ],
+  "properties": {
+    "gse_id": {
+      "type": "string",
+      "pattern": "^GSE[0-9]+$"
+    },
+    "eligible": {
+      "type": "boolean"
+    },
+    "cd8_signal_type": {
+      "enum": ["direct", "proxy", "none"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "needs_splitting": {
+      "type": "boolean"
+    },
+    "split_rationale": {
+      "type": ["string", "null"]
+    },
+    "exclusion_reason": {
+      "type": ["string", "null"]
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "needs_splitting": {"const": true}
+        },
+        "required": ["needs_splitting"]
+      },
+      "then": {
+        "properties": {
+          "split_rationale": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "split_rationale": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eligible": {"const": true}
+        },
+        "required": ["eligible"]
+      },
+      "then": {
+        "properties": {
+          "cd8_signal_type": {"enum": ["direct", "proxy"]},
+          "exclusion_reason": {"type": "null"}
+        }
+      },
+      "else": {
+        "properties": {
+          "exclusion_reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ]
+}

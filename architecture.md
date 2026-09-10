@@ -4,8 +4,10 @@ flowchart TB
         H["Free-text hypothesis:\n'GCN2 modulates CD8+ T cell\nresponse in YF vaccination'"]
     end
 
-    subgraph SPEC["2. Test Specification (LLM)"]
-        S["Structured spec:\ngene=EIF2AK4, aliases=[GCN2]\noutcome=CD8 T cell response\ncontext=YF-17D vaccination\nspecies=Homo sapiens"]
+    subgraph SPEC["2. Hypothesis Specification (LLM)"]
+        S["Structured hypothesis:<br/>gene=EIF2AK4, aliases=[GCN2]<br/>
+        outcome=CD8 T cell response<br/>context=YF-17D vaccination<br/>
+        species=Homo sapiens"]
     end
 
     subgraph DISCOVER["3. Dataset Discovery"]

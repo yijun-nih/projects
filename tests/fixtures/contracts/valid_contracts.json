@@ -1,0 +1,64 @@
+{
+  "hypothesis_spec": {
+    "gene": "EIF2AK4",
+    "aliases": ["GCN2"],
+    "outcome": "CD8+ T cell response magnitude",
+    "context": "YF-17D vaccination",
+    "species": "Homo sapiens"
+  },
+  "eligibility": {
+    "gse_id": "GSE13699",
+    "eligible": true,
+    "cd8_signal_type": "proxy",
+    "confidence": 0.8,
+    "needs_splitting": true,
+    "split_rationale": "Cohorts use different platforms and vaccine brands.",
+    "exclusion_reason": null,
+    "rationale": "The in vivo cohorts match the context and provide a proxy signal."
+  },
+  "synthesis": {
+    "overall_verdict": "inconclusive",
+    "per_dataset": [
+      {
+        "analysis_unit_id": "GSE13699:Montreal:GPL6104",
+        "gse_id": "GSE13699",
+        "cohort": "Montreal",
+        "platform": "GPL6104",
+        "verdict": "inconclusive",
+        "confidence": 0.6,
+        "evidence_summary": "The supplied result does not establish a clear direction.",
+        "rationale": "The effect estimate is uncertain in this analysis unit.",
+        "caveats": ["Small cohort"]
+      }
+    ],
+    "narrative": "The available analysis unit is insufficient for an overall directional claim."
+  },
+  "judgment_provenance": {
+    "call_id": "123e4567-e89b-42d3-a456-426614174000",
+    "stage": "eligibility",
+    "judge_type": "manual_relay",
+    "model": "claude-web-manual",
+    "prompt": "Assess the supplied dataset metadata.",
+    "prompt_version": "1.0.0",
+    "schema": {
+      "$id": "https://hypothesis2omics.local/schemas/eligibility.schema.json",
+      "x-version": "1.0.0"
+    },
+    "schema_id": "https://hypothesis2omics.local/schemas/eligibility.schema.json",
+    "schema_version": "1.0.0",
+    "attempts": [
+      {
+        "attempt": 0,
+        "raw_response": "{\"eligible\": true}",
+        "validation_errors": [],
+        "correction_prompt": null,
+        "timestamp_utc": "2026-09-10T12:00:00+00:00"
+      }
+    ],
+    "validated_response": {"eligible": true},
+    "status": "success",
+    "error": null,
+    "timestamp_utc": "2026-09-10T12:00:00+00:00",
+    "retries": 0
+  }
+}

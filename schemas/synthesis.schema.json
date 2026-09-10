@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hypothesis2omics.local/schemas/synthesis.schema.json",
+  "title": "Hypothesis2Omics cross-dataset synthesis",
+  "x-version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["overall_verdict", "per_dataset", "narrative"],
+  "properties": {
+    "overall_verdict": {
+      "enum": ["supportive", "contradictory", "inconclusive"]
+    },
+    "per_dataset": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/analysis_unit_verdict"
+      }
+    },
+    "narrative": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "analysis_unit_verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_unit_id",
+        "gse_id",
+        "cohort",
+        "platform",
+        "verdict",
+        "confidence",
+        "evidence_summary",
+        "rationale",
+        "caveats"
+      ],
+      "properties": {
+        "analysis_unit_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gse_id": {
+          "type": "string",
+          "pattern": "^GSE[0-9]+$"
+        },
+        "cohort": {
+          "type": ["string", "null"]
+        },
+        "platform": {
+          "type": ["string", "null"],
+          "pattern": "^GPL[0-9]+$"
+        },
+        "verdict": {
+          "enum": ["supportive", "contradictory", "inconclusive"]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "caveats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

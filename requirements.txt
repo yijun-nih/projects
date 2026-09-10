@@ -1,3 +1,4 @@
 GEOparse==2.0.4
+jsonschema==4.25.1
 pandas==3.0.3
 scipy==1.18.0

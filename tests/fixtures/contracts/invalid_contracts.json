@@ -1,0 +1,125 @@
+{
+  "hypothesis_spec": [
+    {
+      "case": "missing species",
+      "instance": {
+        "gene": "EIF2AK4",
+        "aliases": ["GCN2"],
+        "outcome": "CD8 response",
+        "context": "YF-17D vaccination"
+      }
+    },
+    {
+      "case": "unexpected field",
+      "instance": {
+        "gene": "EIF2AK4",
+        "aliases": ["GCN2"],
+        "outcome": "CD8 response",
+        "context": "YF-17D vaccination",
+        "species": "Homo sapiens",
+        "notes": "not in the contract"
+      }
+    }
+  ],
+  "eligibility": [
+    {
+      "case": "confidence outside range",
+      "instance": {
+        "gse_id": "GSE13699",
+        "eligible": true,
+        "cd8_signal_type": "proxy",
+        "confidence": 1.1,
+        "needs_splitting": false,
+        "split_rationale": null,
+        "exclusion_reason": null,
+        "rationale": "Relevant design."
+      }
+    },
+    {
+      "case": "eligible without usable signal",
+      "instance": {
+        "gse_id": "GSE13699",
+        "eligible": true,
+        "cd8_signal_type": "none",
+        "confidence": 0.4,
+        "needs_splitting": false,
+        "split_rationale": null,
+        "exclusion_reason": null,
+        "rationale": "No usable signal."
+      }
+    },
+    {
+      "case": "split without rationale",
+      "instance": {
+        "gse_id": "GSE13699",
+        "eligible": false,
+        "cd8_signal_type": "none",
+        "confidence": 0.9,
+        "needs_splitting": true,
+        "split_rationale": null,
+        "exclusion_reason": "The relevant arm is in vitro.",
+        "rationale": "The experimental context does not match."
+      }
+    }
+  ],
+  "synthesis": [
+    {
+      "case": "invalid verdict",
+      "instance": {
+        "overall_verdict": "proven",
+        "per_dataset": [],
+        "narrative": "The hypothesis is proven."
+      }
+    },
+    {
+      "case": "invalid platform accession",
+      "instance": {
+        "overall_verdict": "inconclusive",
+        "per_dataset": [
+          {
+            "analysis_unit_id": "GSE13699:Montreal:platform-1",
+            "gse_id": "GSE13699",
+            "cohort": "Montreal",
+            "platform": "platform-1",
+            "verdict": "inconclusive",
+            "confidence": 0.5,
+            "evidence_summary": "Unclear result.",
+            "rationale": "Insufficient evidence.",
+            "caveats": []
+          }
+        ],
+        "narrative": "The evidence is inconclusive."
+      }
+    }
+  ],
+  "judgment_provenance": [
+    {
+      "case": "failed call without error",
+      "instance": {
+        "call_id": "123e4567-e89b-42d3-a456-426614174000",
+        "stage": "eligibility",
+        "judge_type": "manual_relay",
+        "model": "claude-web-manual",
+        "prompt": "Assess metadata.",
+        "prompt_version": "1.0.0",
+        "schema": {},
+        "schema_id": "eligibility.schema.json",
+        "schema_version": "1.0.0",
+        "attempts": [
+          {
+            "attempt": 0,
+            "raw_response": "not JSON",
+            "validation_errors": ["Invalid JSON"],
+            "correction_prompt": null,
+            "timestamp_utc": "2026-09-10T12:00:00+00:00"
+          }
+        ],
+        "validated_response": null,
+        "status": "failed",
+        "error": null,
+        "timestamp_utc": "2026-09-10T12:00:00+00:00",
+        "retries": 0
+      }
+    }
+  ]
+}

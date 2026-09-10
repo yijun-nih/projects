@@ -42,7 +42,7 @@ See `architecture-diagram` (rendered separately). Nine stages, grouped into four
 | Stage | Kind | Does |
 |---|---|---|
 | 1. Hypothesis input | — | Free-text hypothesis from the user |
-| 2. Test specification | LLM | Converts hypothesis into structured spec (gene, aliases, outcome, context, species) |
+| 2. Hypothesis specification | LLM | Normalizes gene, aliases, outcome, context, and species |
 | 3. Dataset discovery | Tool call | Searches GEO for candidate series (MVP: pre-seeded list; stretch: live E-utilities search) |
 | 4. Metadata fetch | Tool call (deterministic) | Pulls series-level summary, design text, platform(s), sample characteristics — no full expression data yet |
 | 5. Eligibility assessment | LLM + rules | Judges species/vaccine/design match; classifies what kind of CD8 signal (if any) the dataset offers; assigns confidence; decides whether sub-cohorts/platforms need separate handling |

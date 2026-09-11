@@ -1,0 +1,13 @@
+!Series_title	"Synthetic expression series"
+!Series_geo_accession	"GSE900001"
+!Sample_title	"Sample one"	"Sample two"
+!Sample_geo_accession	"GSM900001"	"GSM900002"
+!Sample_characteristics_ch1	"subject: A"	"subject: B"
+!Sample_characteristics_ch1	"day: 0"	"day: 7"
+!Sample_platform_id	"GPL900001"	"GPL900001"
+!series_matrix_table_begin
+"ID_REF"	"GSM900001"	"GSM900002"
+"probe1"	"1.0"	"2.0"
+"probe2"	"3.0"	"4.0"
+"probe3"	"5.0"	"6.0"
+!series_matrix_table_end

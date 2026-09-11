@@ -1,0 +1,3 @@
+EXPERIMENT_ACCESSION	MEASUREMENT_TECHNIQUE	NAME	STUDY_ACCESSION
+EXP1	DNA microarray	Expression experiment	SDY1
+EXP2	Neutralization assay	Antibody experiment	SDY1

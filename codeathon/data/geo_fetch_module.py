@@ -1,17 +1,47 @@
 """
-Dataset acquisition for the Hypothesis2Omics pipeline.
+Dataset acquisition for the Hypothesis2Omics pipeline (GEO).
 
-For each GEO Series accession, this module fetches the family SOFT file and every
-published series-matrix file, caches the compressed artifacts under data/geo_cache,
-and records per-artifact provenance. GEOparse is used to parse the family SOFT file
-and report platform and sample counts.
+For each GEO Series accession (GSExxxx), this module downloads the family SOFT file
+and every published series-matrix file, validates and caches the compressed files
+under data/geo_cache, and records per-artifact provenance. GEOparse reads the family
+SOFT file to report platform and sample counts.
 
-External dependency: GEOparse.
+GEO downloads require internet access and the GEOparse package, but no account or
+credentials. Install the project's dependencies with `uv sync` before running.
 
-Usage:
+------------------------------------------------------------------------------
+How to run this program
+------------------------------------------------------------------------------
+
+Command-line usage:
+    CANDIDATE_GSE_IDS is the default study list. Running the script without GSE
+    arguments fetches those candidates:
+
+    python data/geo_fetch_module.py
+
+    To fetch only specific studies, list their accessions:
+
+    python data/geo_fetch_module.py GSE13699 GSE125921
+
+    Use --destdir to select another cache directory. Existing valid files are reused;
+    use --force to download and validate them again.
+
+Python usage:
+    Import and call fetch_geo_datasets with the studies you want. The function returns
+    one FetchRecord per study:
+
+    from data.geo_fetch_module import fetch_geo_datasets
+
     results = fetch_geo_datasets(
-        ["GSE125921", "GSE136163", "GSE13485", "GSE82152", "GSE13699"],
+        ["GSE13699", "GSE125921"],
+        provenance_log_path="data/geo_cache/provenance_log.jsonl",
     )
+
+Output:
+    By default, files are saved under data/geo_cache/<GSE_ID>/. Each FetchRecord
+    includes status, source URLs, local paths, file sizes, SHA-256 checksums, errors,
+    timing, and parsed platform/sample counts. Command-line runs also write
+    data/geo_cache/manifest.json and append to data/geo_cache/provenance_log.jsonl.
 """
 
 from __future__ import annotations

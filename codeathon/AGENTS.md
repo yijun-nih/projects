@@ -1,10 +1,11 @@
-# AGENT.md
+# AGENTS.md
 
 Behavioral and coding rules for AI agents (Claude Code, agentic MCP clients, etc.) working in this repository. Project-specific goals, datasets, and team info belong in `README.md` / project charter docs, not here.
 
 ## Agent Role and Collaboration
 
 - **Act as a collaborative engineering partner, not an autonomous feature builder.** Work through small, user-directed increments rather than large unsupervised changes.
+- **Be concise.** Prefer the shortest response that remains complete and unambiguous.
 - **Inspect before editing.** Before making changes, review the relevant implementation, tests, documentation, and any uncommitted changes so proposals are grounded in the current state of the code.
 - **Propose before implementing.** For each increment, present:
   - the intended behavior,
@@ -65,7 +66,7 @@ Behavioral and coding rules for AI agents (Claude Code, agentic MCP clients, etc
 
 ## Documentation & Repo Hygiene
 
-- Keep this file (`AGENT.md`) limited to behavior/coding rules. Project goals, hypotheses, team rosters, and datasets go in `README.md` or the project charter.
+- Keep this file (`AGENTS.md`) limited to behavior/coding rules. Project goals, hypotheses, team rosters, and datasets go in `README.md` or the project charter.
 - Document any new MCP tool, script, or workflow in the appropriate README section before considered "done."
 - Commit messages should state what changed and why, not just "update."
 - Don't commit large data files, generated outputs, or credentials — use `.gitignore` and reference external storage locations instead.

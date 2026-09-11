@@ -123,7 +123,7 @@ the result meaningfully. Rough shape either way:
 
 - **Evidence table granularity** (Section 6): one row per GSE, or per cohort/platform within a GSE?
   Pending hands-on analysis of GSE13699's Montreal vs. Lausanne data to see if pooling changes the result.
-- How many of the charter's other 4 GEO accessions (GSE125921, GSE136163, GSE82152, GSE13699 covered above)
+- How many of the charter's other 4 GEO accessions (GSE125921, GSE136163, GSE13485, GSE82152)
   have direct CD8 annotations vs. requiring marker-gene proxies? (Needs the same manual header inspection
   done for GSE13699.)
 - Marker-gene proxy set: fixed panel (CD8A, CD8B, GZMB, PRF1, IFNG) vs. dataset-dependent, using whatever
@@ -155,7 +155,12 @@ source .venv/bin/activate
 After activation, `python --version` should report `Python 3.12.13`. Run `deactivate` when you are
 finished. 
 
-## 9. Repo structure (proposed)
+## 9. Fetching source datasets
+
+GEO and ImmPort fetchers live in `data/`. See the [data guide](data/README.md) for candidate
+accessions, credentials, commands, cache layout, and provenance outputs.
+
+## 10. Repo structure (proposed)
 
 ```
 hypothesis2omics/
@@ -169,7 +174,9 @@ hypothesis2omics/
 │   ├── eligibility.py         # per-dataset eligibility + confidence judgment
 │   └── synthesis.py           # cross-dataset evidence table + narrative
 ├── data/
-│   └── candidate_datasets.json # hardcoded GSE list from project charter
+│   ├── README.md               # dataset acquisition guide
+│   ├── geo_fetch_module.py     # GEO acquisition and provenance
+│   └── immport_fetch_module.py # ImmPort acquisition and provenance
 └── reports/
     └── evidence_table.md      # generated output
 ```

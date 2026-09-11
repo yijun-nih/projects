@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 
-MODULE_PATH = Path(__file__).parents[1] / "data" / "geo-fetch-module.py"
+MODULE_PATH = Path(__file__).parents[1] / "data" / "geo_fetch_module.py"
 SPEC = importlib.util.spec_from_file_location("geo_fetch_module", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

@@ -60,6 +60,8 @@ See `architecture-diagram` (rendered separately). Nine stages, grouped into four
 | `geo_search` | free-text query | list of GSE accessions + titles | Stretch goal; MVP can hardcode candidate list from charter |
 | `geo_fetch_summary` | GSE accession | title, summary, design text, platform ID(s), sample characteristics block | Fast — metadata only, no expression values |
 | `geo_fetch_matrix` | GSE accession (+ platform, if multi-platform) | sample × probe expression DataFrame | Slow-ish (MBs), only called after eligibility passes |
+| `immport_fetch_study` | SDY accession | manifest, cached files, provenance | API key required |
+| `immport_parse_result` | file + assay schema | DataFrame + validation issues | Planned |
 | `correlate` | matrix, gene symbol, CD8 marker gene(s) or annotated CD8 metric, optional grouping | r/rho, p-value, n, method used | Handles both "proxy via marker genes" and "direct annotation" cases |
 
 ### Supporting libraries
@@ -166,8 +168,9 @@ accessions, credentials, commands, cache layout, and provenance outputs.
 hypothesis2omics/
 ├── README.md
 ├── mcp_server/
-│   ├── server.py              # FastMCP server exposing the 4 tools
+│   ├── server.py              # FastMCP server exposing project tools
 │   ├── geo_tools.py           # geo_search, geo_fetch_summary, geo_fetch_matrix
+│   ├── immport_tools.py       # ImmPort MCP wrappers
 │   └── analysis_tools.py      # correlate
 ├── agent/
 │   ├── spec_builder.py        # hypothesis -> structured test spec
@@ -176,7 +179,8 @@ hypothesis2omics/
 ├── data/
 │   ├── README.md               # dataset acquisition guide
 │   ├── geo_fetch_module.py     # GEO acquisition and provenance
-│   └── immport_fetch_module.py # ImmPort acquisition and provenance
+│   ├── immport_fetch_module.py # ImmPort acquisition and provenance
+│   └── immport_parse_module.py # planned format-specific parsing
 └── reports/
     └── evidence_table.md      # generated output
 ```

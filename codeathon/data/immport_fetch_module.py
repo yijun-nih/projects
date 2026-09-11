@@ -90,6 +90,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Optional
 from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
 logging.basicConfig(
@@ -107,6 +108,8 @@ DRS_DOWNLOAD_ENDPOINT = f"{QUERY_BASE_URL}/drs/download"
 
 USER_AGENT = "Hypothesis2Omics/0.1 (ImmPort dataset retrieval)"
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+MAX_ERROR_BODY_CHARS = 500
+SOURCE_MISSING_MARKERS = ("nosuchkey", "specified key does not exist")
 CANDIDATE_SDY_IDS = ["SDY1529", "SDY1264", "SDY1294", "SDY1289"]
 
 
@@ -120,7 +123,7 @@ class ArtifactRecord:
     """Provenance for one downloaded or cached ImmPort file."""
 
     artifact_type: str  # e.g. "result_file", "study_file", "filepath_manifest"
-    status: str  # "success", "failed", or "cached"
+    status: str  # "success", "failed", "source_missing", or "cached"
     source_path: str  # ImmPort-internal path, e.g. "/SDY208/ResultFiles/..."
     local_file: str
     retrieval_tool: str
@@ -222,6 +225,81 @@ def _sha256_of_file(path: Path, chunk_size: int = 65536) -> str:
     return digest.hexdigest()
 
 
+def _http_error_detail(exc: HTTPError, *secrets: Optional[str]) -> str:
+    """Return bounded HTTP diagnostics without exposing credentials or signed URLs."""
+    detail = f"HTTP {exc.code}: {exc.reason}"
+    try:
+        body = exc.read().decode("utf-8", errors="replace")
+    except Exception:
+        body = ""
+
+    if body:
+        body = " ".join(body.split())
+        for secret in secrets:
+            if secret:
+                body = body.replace(secret, "[REDACTED]")
+        detail = f"{detail}; response={body[:MAX_ERROR_BODY_CHARS]!r}"
+    return detail
+
+
+def _exception_detail(exc: Exception, *secrets: Optional[str]) -> str:
+    """Return an exception message with known secrets removed."""
+    detail = str(exc)
+    for secret in secrets:
+        if secret:
+            detail = detail.replace(secret, "[REDACTED]")
+    return detail
+
+
+def _signed_url_metadata(download_url: str) -> str:
+    """Return non-secret SigV4 metadata for diagnostics."""
+    parsed = urlparse(download_url)
+    query = parse_qs(parsed.query)
+
+    def first_value(name: str) -> str:
+        values = query.get(name)
+        return values[0] if values else "missing"
+
+    return ", ".join(
+        (
+            f"host={parsed.hostname or 'missing'}",
+            f"signed_headers={first_value('X-Amz-SignedHeaders')}",
+            f"issued_at={first_value('X-Amz-Date')}",
+            f"expires_sec={first_value('X-Amz-Expires')}",
+        )
+    )
+
+
+def _is_source_missing(detail: str) -> bool:
+    """Return whether an HTTP diagnostic explicitly identifies a missing object."""
+    normalized = detail.lower()
+    return any(marker in normalized for marker in SOURCE_MISSING_MARKERS)
+
+
+def _probe_stream_for_missing_source(
+    file_uuid: str,
+    session: ImmportSession,
+) -> Optional[str]:
+    """Use the DRS stream method to confirm whether a denied object is missing."""
+    resolver_url = f"{DRS_DOWNLOAD_ENDPOINT}/stream/{file_uuid}"
+    stream_url: Optional[str] = None
+    try:
+        with _authed_get(resolver_url, session) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        if not isinstance(payload, dict):
+            return None
+        stream_url = payload.get("url")
+        if not isinstance(stream_url, str) or not stream_url:
+            return None
+        with urlopen(Request(stream_url), timeout=120):
+            return None
+    except HTTPError as exc:
+        detail = _http_error_detail(exc, session.api_key, stream_url)
+        return detail if _is_source_missing(detail) else None
+    except Exception:
+        return None
+
+
 def _fetch_filepath_manifest(sdy_id: str, session: ImmportSession) -> list[dict]:
     """Retrieve the current study manifest, including DRS IDs for every file."""
     url = f"{STUDY_MANIFEST_ENDPOINT}/{sdy_id}?fileType=all&format=json"
@@ -271,14 +349,41 @@ def _download_file(
 
     temporary_path = destination.with_name(f"{destination.name}.part")
 
+    resolver_url = f"{DRS_DOWNLOAD_ENDPOINT}/s3/{file_uuid}"
     try:
-        resolver_url = f"{DRS_DOWNLOAD_ENDPOINT}/s3/{file_uuid}"
         with _authed_get(resolver_url, session) as response:
             resolver_payload = json.loads(response.read().decode("utf-8"))
+        if not isinstance(resolver_payload, dict):
+            raise ValueError("DRS resolver response is not a JSON object")
         download_url = resolver_payload.get("url")
         if not isinstance(download_url, str) or not download_url:
             raise ValueError("DRS response is missing a download URL")
+    except HTTPError as exc:
+        if temporary_path.exists():
+            temporary_path.unlink()
+        return ArtifactRecord(
+            artifact_type=artifact_type,
+            status="failed",
+            source_path=file_path,
+            local_file=str(destination),
+            retrieval_tool="urllib.request",
+            retrieval_tool_version=platform.python_version(),
+            error=f"DRS resolver failed: {_http_error_detail(exc, session.api_key)}",
+        )
+    except Exception as exc:
+        if temporary_path.exists():
+            temporary_path.unlink()
+        return ArtifactRecord(
+            artifact_type=artifact_type,
+            status="failed",
+            source_path=file_path,
+            local_file=str(destination),
+            retrieval_tool="urllib.request",
+            retrieval_tool_version=platform.python_version(),
+            error=f"DRS resolver failed: {_exception_detail(exc, session.api_key)}",
+        )
 
+    try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         request = Request(download_url, headers={"User-Agent": USER_AGENT})
         with urlopen(request, timeout=120) as response, temporary_path.open("wb") as output:
@@ -307,6 +412,28 @@ def _download_file(
             sha256=_sha256_of_file(destination),
             size_bytes=destination.stat().st_size,
         )
+    except HTTPError as exc:
+        if temporary_path.exists():
+            temporary_path.unlink()
+        detail = _http_error_detail(exc, session.api_key, download_url)
+        status = "source_missing" if _is_source_missing(detail) else "failed"
+        if status == "failed" and exc.code == 403:
+            stream_detail = _probe_stream_for_missing_source(file_uuid, session)
+            if stream_detail:
+                status = "source_missing"
+                detail = f"{detail}; stream probe={stream_detail}"
+        return ArtifactRecord(
+            artifact_type=artifact_type,
+            status=status,
+            source_path=file_path,
+            local_file=str(destination),
+            retrieval_tool="urllib.request",
+            retrieval_tool_version=platform.python_version(),
+            error=(
+                f"Signed download failed: {detail}; "
+                f"signed_url_metadata=({_signed_url_metadata(download_url)})"
+            ),
+        )
     except Exception as exc:
         if temporary_path.exists():
             temporary_path.unlink()
@@ -317,7 +444,10 @@ def _download_file(
             local_file=str(destination),
             retrieval_tool="urllib.request",
             retrieval_tool_version=platform.python_version(),
-            error=str(exc),
+            error=(
+                "Signed download failed: "
+                f"{_exception_detail(exc, session.api_key, download_url)}"
+            ),
         )
 
 
@@ -327,9 +457,9 @@ def _summarize_status(artifacts: Sequence[ArtifactRecord]) -> str:
         return "failed"
     if statuses == {"cached"}:
         return "cached"
-    if "failed" not in statuses:
+    if statuses <= {"success", "cached"}:
         return "success"
-    if statuses == {"failed"}:
+    if statuses <= {"failed", "source_missing"}:
         return "failed"
     return "partial"
 
@@ -427,7 +557,7 @@ def fetch_one(
             expected_size=entry.get("filesizeBytes"),
         )
         artifacts.append(artifact)
-        if artifact.status == "failed":
+        if artifact.status in {"failed", "source_missing"}:
             errors.append(f"{Path(file_path).name}: {artifact.error}")
 
     n_downloaded = sum(

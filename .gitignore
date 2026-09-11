@@ -24,8 +24,8 @@ dist/
 *.egg-info/
 
 # Project data caches and credentials
-data/geo_cache/
-data/immport_cache/
+codeathon/data/geo_cache/
+codeathon/data/immport_cache/
 
 # Operating-system metadata
 .DS_Store

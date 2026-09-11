@@ -2,9 +2,6 @@
 
 **NIAID-BRC AI Codeathon 2.0 — Project 10**
 
-<img width="1385" height="1136" alt="architecture_readme" src="https://github.com/user-attachments/assets/c94dea9e-9abc-4c89-aecb-6453e4562a40" />
-
-
 ## 1. What this is
 
 Hypothesis2Omics is an AI-agent prototype that takes a biological hypothesis, finds public datasets that
@@ -40,7 +37,7 @@ the sentence explaining that decision.
 
 ## 3. Architecture
 
-See `architecture-diagram` (rendered separately). Nine stages, grouped into four kinds of work:
+<img width="1385" height="1136" alt="architecture_readme" src="https://github.com/user-attachments/assets/c94dea9e-9abc-4c89-aecb-6453e4562a40" />
 
 | Stage | Kind | Does |
 |---|---|---|

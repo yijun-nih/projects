@@ -1,37 +1,47 @@
-"""Expose parsed Hypothesis2Omics GEO data through a read-only MCP server.
+"""Expose the Hypothesis2Omics data pipeline and parsed GEO outputs through MCP.
 
 The server reads ``HYPOTHESIS2OMICS_GEO_PARSED_ROOT`` when set and otherwise
-uses ``data/geo_cache/parsed``. It uses stdio by default and performs no network
-requests or data writes.
+uses ``data/geo_cache/parsed``. Executable tools use ``HYPOTHESIS2OMICS_DATA_ROOT``
+when set and otherwise use ``data``. The server uses stdio by default.
 """
 
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 from fastmcp import FastMCP
 
-try:
-    from mcp_server.geo_tools import DEFAULT_PARSED_ROOT, GeoDataStore
-except ModuleNotFoundError as exc:
-    if exc.name != "mcp_server":
-        raise
-    from geo_tools import DEFAULT_PARSED_ROOT, GeoDataStore  # type: ignore[no-redef]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from mcp_server.geo_tools import GeoDataStore
+from mcp_server.pipeline_tools import DEFAULT_DATA_ROOT, PipelineTools
 
 PARSED_ROOT_ENV = "HYPOTHESIS2OMICS_GEO_PARSED_ROOT"
+DATA_ROOT_ENV = "HYPOTHESIS2OMICS_DATA_ROOT"
 
 
-def create_server(parsed_root: str | Path | None = None) -> FastMCP:
+def create_server(
+    parsed_root: str | Path | None = None,
+    data_root: str | Path | None = None,
+) -> FastMCP:
     """Create a server bound to one parsed GEO output root."""
-    configured_root = parsed_root or os.environ.get(PARSED_ROOT_ENV, DEFAULT_PARSED_ROOT)
-    store = GeoDataStore(configured_root)
+    configured_data_root = data_root or os.environ.get(DATA_ROOT_ENV, DEFAULT_DATA_ROOT)
+    pipeline = PipelineTools(configured_data_root)
+    configured_parsed_root = parsed_root or os.environ.get(
+        PARSED_ROOT_ENV,
+        pipeline.geo_parsed,
+    )
+    store = GeoDataStore(configured_parsed_root)
     server = FastMCP(
         name="hypothesis2omics",
         instructions=(
-            "Read-only access to provenance-backed GEO analysis units. "
-            "Use list_analysis_units first to discover stable unit IDs."
+            "Execute provenance-backed ingestion stages and inspect parsed GEO units. "
+            "Run stages separately and inspect each status before continuing."
         ),
     )
 
@@ -66,6 +76,37 @@ def create_server(parsed_root: str | Path | None = None) -> FastMCP:
     def get_expression_info(unit_id: str) -> dict[str, Any]:
         """Get expression dimensions, samples, path, and hash without matrix values."""
         return store.get_expression_info(unit_id)
+
+    @server.tool
+    def fetch_immport_studies(
+        study_accessions: list[str],
+        max_files_per_study: int | None = None,
+    ) -> dict[str, Any]:
+        """Fetch specified ImmPort studies using server-side credentials and caching."""
+        return pipeline.fetch_immport_studies(
+            study_accessions,
+            max_files_per_study=max_files_per_study,
+        )
+
+    @server.tool
+    def parse_immport_studies() -> dict[str, Any]:
+        """Parse all cached ImmPort studies and combine their sample linkage."""
+        return pipeline.parse_immport_studies()
+
+    @server.tool
+    def plan_geo_retrieval(batch_size: int = 100, timeout: int = 60) -> dict[str, Any]:
+        """Resolve linked GSM accessions and write the cached GEO retrieval plan."""
+        return pipeline.plan_geo_retrieval(batch_size=batch_size, timeout=timeout)
+
+    @server.tool
+    def fetch_planned_geo() -> dict[str, Any]:
+        """Fetch only GSE accessions marked for download in the current GEO plan."""
+        return pipeline.fetch_planned_geo()
+
+    @server.tool
+    def parse_geo_matrices() -> dict[str, Any]:
+        """Parse downloaded GEO matrices into bounded analysis units."""
+        return pipeline.parse_geo_matrices()
 
     return server
 

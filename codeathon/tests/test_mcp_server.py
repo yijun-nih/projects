@@ -198,6 +198,11 @@ class McpProtocolTests(unittest.IsolatedAsyncioTestCase):
                 "get_analysis_unit",
                 "get_sample_metadata",
                 "get_expression_info",
+                "fetch_immport_studies",
+                "parse_immport_studies",
+                "plan_geo_retrieval",
+                "fetch_planned_geo",
+                "parse_geo_matrices",
             },
         )
         self.assertEqual(result.data["units"][0]["analysis_unit_id"], UNIT_ID)

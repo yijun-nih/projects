@@ -1,2 +1,1 @@
-"""Read-only MCP access to Hypothesis2Omics deterministic data products."""
-
+"""MCP access to the Hypothesis2Omics data pipeline and its products."""

@@ -66,7 +66,25 @@ the sentence explaining that decision.
 
 ### Implemented MCP server
 
-`mcp_server.server` exposes the parsed GEO outputs through four read-only tools:
+`mcp_server.server` exposes five executable pipeline tools and four read-only inspection tools.
+
+| Pipeline tool | Existing implementation called directly |
+|---|---|
+| `fetch_immport_studies` | `data.immport_fetch_module.fetch_immport_datasets` |
+| `parse_immport_studies` | `data.immport_batch_parse.run_batch` |
+| `plan_geo_retrieval` | `data.geo_plan_module.plan_geo_downloads` |
+| `fetch_planned_geo` | `data.geo_fetch_module.fetch_geo_datasets` |
+| `parse_geo_matrices` | `data.geo_matrix_parse_module.parse_geo_matrices` |
+
+The intended pipeline sequence is:
+
+```text
+fetch_immport_studies -> parse_immport_studies -> plan_geo_retrieval
+-> fetch_planned_geo -> parse_geo_matrices
+```
+
+Each stage returns a bounded status and provenance summary so an MCP agent can inspect failures before
+continuing. Fetch tools reuse valid cached files; they do not expose a force-redownload option.
 
 | Tool | Purpose |
 |---|---|
@@ -81,10 +99,12 @@ Run the local stdio server from the repository root:
 .venv/bin/python -m mcp_server.server
 ```
 
-The default parsed-data root is `data/geo_cache/parsed`. Set
-`HYPOTHESIS2OMICS_GEO_PARSED_ROOT` to use another parser output directory. The server performs no
-network calls or data writes. Full expression matrices are intentionally not returned through MCP;
-later analysis tools should compute against them server-side and return bounded results.
+The default data root is `data`. Set `HYPOTHESIS2OMICS_DATA_ROOT` to isolate the executable pipeline
+in another directory. The parsed-data reader follows that root by default; set
+`HYPOTHESIS2OMICS_GEO_PARSED_ROOT` only to override it separately. ImmPort credentials remain
+server-side through `IMMPORT_API_KEY_FILE` or `IMMPORT_API_KEY` and are never tool arguments or
+results. Full expression matrices are intentionally not returned through MCP; later analysis tools
+should compute against them server-side and return bounded results.
 
 ### Supporting libraries
 
@@ -190,8 +210,9 @@ accessions, credentials, commands, cache layout, and provenance outputs.
 hypothesis2omics/
 ├── README.md
 ├── mcp_server/
-│   ├── server.py              # read-only FastMCP stdio server
-│   └── geo_tools.py           # parsed-unit metadata accessors
+│   ├── server.py              # FastMCP stdio server and tool registration
+│   ├── pipeline_tools.py      # controlled adapters around data/*.py functions
+│   └── geo_tools.py           # read-only parsed-unit metadata accessors
 ├── agent/
 │   ├── spec_builder.py        # hypothesis -> structured test spec
 │   ├── eligibility.py         # per-dataset eligibility + confidence judgment

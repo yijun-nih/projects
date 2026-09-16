@@ -64,17 +64,39 @@ the sentence explaining that decision.
 | `immport_parse_result` | file + assay schema | DataFrame + validation issues | Planned |
 | `correlate` | matrix, gene symbol, CD8 marker gene(s) or annotated CD8 metric, optional grouping | r/rho, p-value, n, method used | Handles both "proxy via marker genes" and "direct annotation" cases |
 
+### Implemented MCP server
+
+`mcp_server.server` exposes the parsed GEO outputs through four read-only tools:
+
+| Tool | Purpose |
+|---|---|
+| `list_analysis_units` | Discover stable unit IDs and sample/probe counts |
+| `get_analysis_unit` | Inspect unit provenance, hashes, and metadata fields |
+| `get_sample_metadata` | Query bounded pages of linked ImmPort and GEO metadata |
+| `get_expression_info` | Inspect matrix dimensions and sample columns without returning values |
+
+Run the local stdio server from the repository root:
+
+```bash
+.venv/bin/python -m mcp_server.server
+```
+
+The default parsed-data root is `data/geo_cache/parsed`. Set
+`HYPOTHESIS2OMICS_GEO_PARSED_ROOT` to use another parser output directory. The server performs no
+network calls or data writes. Full expression matrices are intentionally not returned through MCP;
+later analysis tools should compute against them server-side and return bounded results.
+
 ### Supporting libraries
 
 - **GEOparse** (Python) — series matrix + metadata parsing; handles gzip, platform annotation lookup
 - **pandas** — tabular manipulation
 - **scipy.stats** — correlation (Pearson/Spearman depending on distribution)
 - **NCBI E-utilities** (esearch/esummary) — fallback/live discovery if `geo_search` goes beyond the hardcoded list
+- **FastMCP** (Python MCP SDK) — exposes deterministic data tools to compatible MCP hosts
 
 ### Stretch integrations (post-MVP)
 
 - **BRC Analytics / Galaxy** — hand off the correlation/DE step as a reproducible workflow run, rather than a local script
-- **FastMCP** (Python MCP SDK) — used to expose the above tools as an actual MCP server other agents/hosts can call
 
 ## 5. Worked example: what GSE13699 taught us
 
@@ -162,16 +184,14 @@ finished.
 GEO and ImmPort fetchers live in `data/`. See the [data guide](data/README.md) for candidate
 accessions, credentials, commands, cache layout, and provenance outputs.
 
-## 10. Repo structure (proposed)
+## 10. Repo structure (current and planned)
 
 ```
 hypothesis2omics/
 ├── README.md
 ├── mcp_server/
-│   ├── server.py              # FastMCP server exposing project tools
-│   ├── geo_tools.py           # geo_search, geo_fetch_summary, geo_fetch_matrix
-│   ├── immport_tools.py       # ImmPort MCP wrappers
-│   └── analysis_tools.py      # correlate
+│   ├── server.py              # read-only FastMCP stdio server
+│   └── geo_tools.py           # parsed-unit metadata accessors
 ├── agent/
 │   ├── spec_builder.py        # hypothesis -> structured test spec
 │   ├── eligibility.py         # per-dataset eligibility + confidence judgment
@@ -180,7 +200,8 @@ hypothesis2omics/
 │   ├── README.md               # dataset acquisition guide
 │   ├── geo_fetch_module.py     # GEO acquisition and provenance
 │   ├── immport_fetch_module.py # ImmPort acquisition and provenance
-│   └── immport_parse_module.py # planned format-specific parsing
+│   ├── immport_parse_module.py # format-specific ImmPort parsing
+│   └── geo_matrix_parse_module.py # bounded GEO matrix parsing
 └── reports/
     └── evidence_table.md      # generated output
 ```
